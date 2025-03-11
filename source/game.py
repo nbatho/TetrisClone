@@ -12,9 +12,6 @@ class Game:
         self.update_score = update_score
         self.game_over = False
 
-        # bots
-        self.bot_enabled = True
-
         # lines
         self.line_surface = self.surface.copy()
         self.line_surface.fill((0,255,0))
@@ -49,26 +46,6 @@ class Game:
         self.current_score = 0
         self.current_lines = 0
 
-    def evaluate_board(self,field_data):
-        simulated_field = [row[:] for row in field_data]
-        holes = 0
-        bumpiness = 0
-        heights = [0] * COLUMNS
-        for x in range(COLUMNS):
-            block_found = False
-            for y in range(ROWS):
-                if (simulated_field[y][x] != 0):
-                    if not block_found:
-                        heights[x] = ROWS - y
-                        block_found = True
-                    elif block_found:
-                        holes += 1
-        aggregate_height = sum(heights)
-        for idx in range(COLUMNS - 1):
-            bumpiness += abs(heights[idx] - heights[idx + 1])
-        lines_cleared = sum(1 for row in simulated_field if all(row))
-
-        return lines_cleared*50 - aggregate_height*5 - holes*20 - bumpiness*2
 
     def new_game(self):
         self.game_over = False
@@ -213,11 +190,6 @@ class Game:
     def run(self):
         #update
         self.input()
-
-        # bot
-        if self.bot_enabled:
-            self.tetrominos.generate_all_moves()
-
         self.timer_update()
         self.sprites.update()
         # drawing
@@ -310,42 +282,6 @@ class Tetromino():
                 if pos.y >= ROWS: return
             for i,block in enumerate(self.blocks):
                 block.pos = new_block_positions [i]
-
-    def generate_all_moves(self):
-        # """ Generate all possible moves (rotations + horizontal positions) for the current Tetromino """
-        # possible_moves = []
-        # original_positions = [block.pos.copy() for block in self.blocks]  # Save original position
-        #
-        # for rotation in range(4):  # Try 0°, 90°, 180°, 270°
-        #     for x_offset in range(-COLUMNS, COLUMNS):  # Try moving left and right
-        #         # Move piece horizontally
-        #         min_x = min(block.pos.x for block in self.blocks)
-        #         move_distance = x_offset - min_x
-        #         self.move_horizontal(move_distance)
-        #
-        #         # Hard drop the piece
-        #         self.hard_drop()
-        #
-        #         # Evaluate the board after placing the Tetromino
-        #         score = self.evaluate_board(self.field_data)
-        #
-        #         # Store move data
-        #         move_data = {
-        #             "rotation": rotation,
-        #             "x_offset": x_offset,
-        #             "score": score
-        #         }
-        #         possible_moves.append(move_data)
-        #
-        #         # Reset to original position before trying next move
-        #         for i, block in enumerate(self.blocks):
-        #             block.pos = original_positions[i]
-        #
-        #     self.rotate()  # Try next rotation
-        #
-        # return possible_moves  # Return all tested moves
-        pass
-
 
 class Block(pygame.sprite.Sprite):
     def __init__(self,group,pos,color):
