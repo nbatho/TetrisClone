@@ -15,7 +15,7 @@ class Main:
         pygame.display.set_caption('TetrisClone')
 
         #shapes
-        self.next_shapes = [choice (list(TETROMINOS.keys())) for _ in range(3)]
+        self.next_shapes = [choice (list(TETROMINOS.keys())) for _ in range(7)]
 
         self.game = Game(self.get_next_shape, self.update_score)
         self.score = Score()
@@ -37,6 +37,9 @@ class Main:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:  # Nhấn phím 'R' để reset
+                        self.game.reset()
             # display
             self.display_surface.fill(GRAY)
             self.game.run()
