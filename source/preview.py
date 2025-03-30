@@ -1,17 +1,17 @@
 from setting import *
 from pygame.image import load
 class Preview:
-    def __init__(self):
+    def __init__(self,x_offset = 0):
         # general
         self.display_surface = pygame.display.get_surface()
-        self.surface = pygame.Surface((SIDEBAR_WIDTH,GAME_HEIGHT * PREVIEW_HEIGHT_FRACTION))
-        self.rect = self.surface.get_rect(topright = (WINDOW_WIDTH - PADDING,PADDING))
+        self.surface = pygame.Surface((SIDEBAR_WIDTH,GAME_HEIGHT * SCORE_HEIGHT_FRACTION - PADDING))
+        self.rect = self.surface.get_rect(topright = (x_offset + WINDOW_WIDTH - PADDING,PADDING))
 
         # shapes
         self.shape_surfaces = {shape:load(f'../graphics/{shape}.png').convert_alpha() for shape in TETROMINOS.keys()}
 
         # image position data
-        self.increment_height = self.surface.get_height() / 3
+        self.increment_height = self.surface.get_height()
     def display_pieces(self,shapes):
         for i,shape in enumerate(shapes):
             shape_surface = self.shape_surfaces[shape]

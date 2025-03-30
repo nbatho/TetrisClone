@@ -1,19 +1,20 @@
 from setting import *
 from random import choice
 from timer import Timer
-import numpy as np
 class Game:
-    def __init__(self, get_next_shape, update_score):
+    def __init__(self, get_next_shape, update_score, bot_enable = False,x_offset = 0):
         #general
+        self.x_offset = x_offset
         self.surface = pygame.Surface((GAME_WIDTH,GAME_HEIGHT))
         self.display_surface = pygame.display.get_surface()
-        self.rect = self.surface.get_rect(topleft = (PADDING,PADDING))
+        self.rect = self.surface.get_rect(topleft = (self.x_offset + PADDING,PADDING))
         self.sprites = pygame.sprite.Group()
         self.get_next_shape = get_next_shape
         self.update_score = update_score
+
         self.game_over = False
         #bot
-        self.bot_enable = True
+        self.bot_enable = bot_enable
         # lines
         self.line_surface = self.surface.copy()
         self.line_surface.fill((0,255,0))
@@ -27,7 +28,6 @@ class Game:
             self.sprites,
             self.create_new_tetromino,
             self.field_data,
-            self.game_over,
         )
 
         # timer
@@ -67,10 +67,17 @@ class Game:
             self.sprites,
             self.create_new_tetromino,
             self.field_data,
-            self.game_over,
-    )
+        )
+        for block in self.tetrominos.blocks:
+            # Ensure block position is valid before checking field_data
+            if 0 <= int(block.pos.y) < ROWS and 0 <= int(block.pos.x) < COLUMNS:
+                if self.field_data[int(block.pos.y)][int(block.pos.x)]:
+                    self.game_over = True
+                    self.timers['vertical move'].deactivate()
+                    print("GAME OVER DETECTED!")  # Debug message
+                    break
 
-    def cal_hoes(self, matrix):
+    def calculate_holes(self, matrix):
         holes = 0
         for j in range(COLUMNS):
             block_found = False
@@ -80,38 +87,32 @@ class Game:
                 elif matrix[i][j] == 0 and block_found:
                     holes += 1
         return holes
-    def cal_complete_line(self,matrix):
-        complete_line = 0
-        for i in range(ROWS):
-            cnt = 0
-            for j in range(COLUMNS):
-                if matrix[i][j] != 0:
-                    cnt +=1
-            if cnt == COLUMNS:
-                complete_line += 1
-        return complete_line
     def evaluate_board(self,matrix):
         height = 0
         bumpiness = 0
-        hole = self.cal_hoes(matrix)
-        complete_line = self.cal_complete_line(matrix)
+        hole = self.calculate_holes(matrix)
+        complete_line = self.check_finished_rows()
         ls_height = [0]*COLUMNS
-        a = -0.510066
-        b = 0.760666
-        c = -0.35663
-        d = -0.184483
+        # Heurisitic weights
+        a = -0.510066  # Aggregate Height Weight
+        b = 0.760666  # Complete Lines Weight
+        c = -0.35663  # Holes Weight
+        d = -0.184483  # Bumpiness Weight
         for j in range(COLUMNS):
             for i in range(ROWS):
                 if matrix[i][j] != 0:
-                    ls_height[j] = ROWS - i
-                    height += ROWS - i
+                    col_height = ROWS - i
+                    ls_height[j] = col_height
+                    height += col_height  # Aggregate height
                     break
         for i in range(len(ls_height) - 1):
             bumpiness += abs(ls_height[i] - ls_height[i+1])
 
-        return height * a + complete_line * b + hole * c + bumpiness * d
+        score = height * a + complete_line * b + hole * c + bumpiness * d
+        return score
 
     def all_possible_move(self):
+        if self.game_over: return
         if not self.timers['calculate score'].active:
             best_score = float('-inf')
             best_state = None
@@ -193,9 +194,11 @@ class Game:
         # Thả khối xuống vị trí tốt nhất
         self.tetrominos.hard_drop()
     def timer_update(self):
+        if self.game_over: return
         for timer in self.timers.values():
             timer.update()
     def move_down(self):
+        if self.game_over: return
         self.tetrominos.move_down()
     def draw_grid(self):
         for col in range(1,COLUMNS):
@@ -209,33 +212,35 @@ class Game:
     def input(self):
         keys = pygame.key.get_pressed()
 
-        if not self.timers['horizontal move'].active:
-            if keys[pygame.K_LEFT]:
-                self.tetrominos.move_horizontal(-1)
-                self.timers['horizontal move'].activate()
-            if keys[pygame.K_RIGHT]:
-                self.tetrominos.move_horizontal(1)
-                self.timers['horizontal move'].activate()
+        if self.game_over: return
+        if not self.bot_enable:
+            if not self.timers['horizontal move'].active:
+                if keys[pygame.K_LEFT]:
+                    self.tetrominos.move_horizontal(-1)
+                    self.timers['horizontal move'].activate()
+                if keys[pygame.K_RIGHT]:
+                    self.tetrominos.move_horizontal(1)
+                    self.timers['horizontal move'].activate()
 
-        # hard drop
-        if not self.timers['hard drop'].active:
-            if keys[pygame.K_SPACE] and not self.game_over:
-                self.tetrominos.hard_drop()
-                self.timers['hard drop'].activate()
-        # check for rotation
-        if not self.timers['rotate'].active:
-            if keys[pygame.K_UP]:
-                self.tetrominos.rotate()
-                self.timers['rotate'].activate()
-        # down speedup
-            # pressing
-        if not self.down_pressed and keys[pygame.K_DOWN]:
-            self.down_pressed = True
-            self.timers['vertical move'].duration = self.down_speed_faster
-            # realse
-        if self.down_pressed and not keys[pygame.K_DOWN]:
-            self.down_pressed = False
-            self.timers['vertical move'].duration = self.down_speed
+            # hard drop
+            if not self.timers['hard drop'].active:
+                if keys[pygame.K_SPACE] and not self.game_over:
+                    self.tetrominos.hard_drop()
+                    self.timers['hard drop'].activate()
+            # check for rotation
+            if not self.timers['rotate'].active:
+                if keys[pygame.K_UP]:
+                    self.tetrominos.rotate()
+                    self.timers['rotate'].activate()
+            # down speedup
+                # pressing
+            if not self.down_pressed and keys[pygame.K_DOWN]:
+                self.down_pressed = True
+                self.timers['vertical move'].duration = self.down_speed_faster
+                # realse
+            if self.down_pressed and not keys[pygame.K_DOWN]:
+                self.down_pressed = False
+                self.timers['vertical move'].duration = self.down_speed
     def check_finished_rows(self):
 
         # get the full row indexes
@@ -261,6 +266,7 @@ class Game:
 
             # update score
             self.calculate_score(len(delete_rows))
+        return len(delete_rows)
 
     def reset(self):
         self.field_data = [[0 for _ in range(COLUMNS)] for _ in range(ROWS)]
@@ -269,40 +275,49 @@ class Game:
         self.current_level = 1
         self.current_score = 0
         self.current_lines = 0
-        self.timers['vertical move'].duration = UPDATE_START_SPEED
+        self.down_speed = UPDATE_START_SPEED
+        self.down_speed_faster = self.down_speed * 0.3
+        # Reset and reactivate timers
+        self.timers['vertical move'].duration = self.down_speed
+        self.timers['vertical move'].activate()  # Ensure vertical movement starts again
+        self.timers['horizontal move'].active = False
+        self.timers['rotate'].active = False
+        self.timers['hard drop'].active = False
+        self.timers['calculate score'].active = False  # Ensure bot timer is reset
         self.tetrominos = Tetromino(
             self.get_next_shape(),
             self.sprites,
             self.create_new_tetromino,
             self.field_data,
-            self.game_over
         )
         self.update_score(self.current_lines, self.current_score, self.current_level)
     def run(self):
         #update
 
-        self.input()
-        self.timer_update()
-        self.sprites.update()
-        if self.bot_enable:
-            self.all_possible_move()
+        if not self.game_over:
+            self.input()  # Handle player input (if bot disabled)
+            self.timer_update()  # Update timers (movement, actions)
+            self.sprites.update()  # Update sprite positions based on their internal logic (e.g., rect)
+
+            # Run bot logic if enabled and game is not over
+            if self.bot_enable and not self.game_over:
+                self.all_possible_move()
         # drawing
         self.surface.fill(GRAY)
         self.sprites.draw(self.surface)
         self.draw_grid()
-        self.display_surface.blit(self.surface,(PADDING,PADDING))
+        self.display_surface.blit(self.surface,(self.x_offset + PADDING,PADDING))
         pygame.draw.rect(self.display_surface,LINE_COLOR,self.rect,2,2)
 
 
 class Tetromino():
-    def __init__(self,shape,group, create_new_tetromino, field_data,game_over):
+    def __init__(self,shape,group, create_new_tetromino, field_data):
         # setup
         self.shape = shape
         self.block_positions = TETROMINOS[shape]['shape']
         self.color = TETROMINOS[shape]['color']
         self.create_new_tetromino = create_new_tetromino
         self.field_data = field_data
-        self.game_over = game_over
         # create blocks
         self.blocks = [Block(group,pos,self.color) for pos in self.block_positions]
 
@@ -374,18 +389,6 @@ class Tetromino():
         if not self.next_move_horizontal_collide(self.blocks, amount):
             for block in self.blocks:
                 block.pos.x += amount
-
-    #endgame
-    def check_game_over(self):
-        min_height = 30
-        for block in self.blocks:
-            min_height = min(min_height,block.pos.y)
-            if min_height <= 0:
-                self.game_over = True
-                return True
-        return False
-
-
 class Block(pygame.sprite.Sprite):
     def __init__(self,group,pos,color):
         #general

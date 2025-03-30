@@ -1,9 +1,9 @@
 from setting import *
 
 class Score:
-    def __init__(self):
+    def __init__(self, x_offset = 0):
         self.surface = pygame.Surface((SIDEBAR_WIDTH,GAME_HEIGHT * SCORE_HEIGHT_FRACTION - PADDING))
-        self.rect = self.surface.get_rect(bottomright= (WINDOW_WIDTH - PADDING, WINDOW_HEIGHT - PADDING))
+        self.rect = self.surface.get_rect(bottomright= (x_offset + WINDOW_WIDTH - PADDING, WINDOW_HEIGHT - PADDING))
         self.display_surface = pygame.display.get_surface()
 
         # data
