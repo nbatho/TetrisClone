@@ -1,3 +1,4 @@
+import pygame, sys
 from setting import *
 
 # components
@@ -5,6 +6,7 @@ from game import Game
 from score import Score
 from preview import Preview
 from random import choice
+from menu import main_menu, options
 
 class Main:
     def __init__(self):
@@ -13,6 +15,7 @@ class Main:
         self.display_surface = pygame.display.set_mode((WINDOW_WIDTH*2,WINDOW_HEIGHT))
         self.clock = pygame.time.Clock()
         pygame.display.set_caption('TetrisClone')
+
         # bot
         #shapes
         self.next_shapes = [choice (list(TETROMINOS.keys())) for _ in range(7)]
@@ -40,26 +43,44 @@ class Main:
         return next_shape
 
     def run(self):
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_r:  # Nhấn phím 'R' để reset
-                        self.game.reset()
-            # display
-            self.display_surface.fill(GRAY)
-            self.game.run()
-            self.bot_game.run()
-            self.score.run()
-            self.bot_score.run()
+        game_running  = True
+        while game_running:
+            selection = main_menu()
 
-            self.preview.run(self.next_shapes)
-            self.bot_preview.run(self.next_shapes)
-            #updating the game
-            pygame.display.update()
-            self.clock.tick(60)
+            if selection == "play":
+                playing = True
+                while playing:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            sys.exit()
+                        elif event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_ESCAPE:
+                                playing = False
+                                break
+                            if event.key == pygame.K_r:  # Nhấn phím 'R' để reset
+                                self.game.reset()
+
+                    # display
+                    self.display_surface.fill(GRAY)
+                    self.game.run()
+                    self.bot_game.run()
+                    self.score.run()
+                    self.bot_score.run()
+
+                    self.preview.run(self.next_shapes)
+                    self.bot_preview.run(self.next_shapes)
+                    #updating the game
+                    pygame.display.update()
+                    self.clock.tick(60)
+
+            elif selection == "options":
+                options()
+            elif selection == "quit":
+                game_runinning = False
+                pygame.quit()
+                sys.exit()
+
 if __name__ == '__main__':
     main = Main()
     main.run()
