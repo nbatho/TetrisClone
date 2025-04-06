@@ -40,8 +40,7 @@ def threaded_client(conn, player):
             reply = players[opponent] if players[opponent] else {}
             conn.sendall(pickle.dumps(reply))
 
-        except Exception as e:
-            print("Error:", e)
+        except:
             break
 
     print("Lost connection to player", player)

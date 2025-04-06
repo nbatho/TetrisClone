@@ -2,7 +2,7 @@ from setting import *
 from random import choice
 from timer import Timer
 class Game:
-    def __init__(self, get_next_shape, update_score, bot_enable = False,x_offset = 0):
+    def __init__(self, get_next_shape, update_score, bot_enable = False,x_offset = 0, is_remoted = False):
         #general
         self.x_offset = x_offset
         self.surface = pygame.Surface((GAME_WIDTH,GAME_HEIGHT))
@@ -11,7 +11,7 @@ class Game:
         self.sprites = pygame.sprite.Group()
         self.get_next_shape = get_next_shape
         self.update_score = update_score
-
+        self.is_remoted = is_remoted
         self.game_over = False
         #bot
         self.bot_enable = bot_enable
@@ -210,6 +210,8 @@ class Game:
 
         self.surface.blit(self.line_surface,(0,0))
     def input(self):
+        if self.is_remoted:
+            return
         keys = pygame.key.get_pressed()
 
         if self.game_over: return
