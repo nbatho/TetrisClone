@@ -2,7 +2,7 @@ import socket
 from _thread import *
 import pickle
 
-server = "0.0.0.0"
+server = "192.168.55.105"
 port = 5555
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -22,20 +22,17 @@ connections = 0
 
 def threaded_client(conn, player):
     print(f"Player {player} connected.")
-
-    # Gửi cho client ID người chơi (0 hoặc 1)
     conn.send(pickle.dumps(player))
 
     while True:
         try:
             data = pickle.loads(conn.recv(4096))
-            players[player] = data  # Lưu game_state người chơi
+            players[player] = data
 
             if not data:
                 print("Disconnected")
                 break
 
-            # Gửi lại trạng thái của người chơi còn lại
             opponent = 1 - player
             reply = players[opponent] if players[opponent] else {}
             conn.sendall(pickle.dumps(reply))
@@ -46,7 +43,6 @@ def threaded_client(conn, player):
     print("Lost connection to player", player)
     players[player] = {}
     conn.close()
-
 
 # Chờ tối đa 2 người chơi
 while True:

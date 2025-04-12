@@ -38,7 +38,7 @@ class Game:
             'vertical move': Timer(self.down_speed, True,self.move_down),
             'horizontal move': Timer(MOVE_WAIT_TIME),
             'rotate': Timer(ROTATE_WAIT_TIME),
-            'hard drop': Timer(200),
+            'hard drop': Timer(300),
             'print':Timer(1000),
             'calculate score': Timer(750),
         }
@@ -48,6 +48,41 @@ class Game:
         self.current_level = 1
         self.current_score = 0
         self.current_lines = 0
+
+    def get_state(self):
+        # Lưu lưới game dạng đơn giản
+        field_serialized = [[1 if cell else 0 for cell in row] for row in self.field_data]
+
+        return {
+            "field_data": field_serialized,
+            "score": self.current_score,
+            "level": self.current_level,
+            "lines": self.current_lines,
+            "game_over": self.game_over,
+        }
+
+    def set_state(self, state):
+        if not state: return
+        # Xóa sprite cũ
+        self.sprites.empty()
+
+        # Tạo lại field_data và sprite từ dữ liệu nhận được
+        self.field_data = [[0 for _ in range(COLUMNS)] for _ in range(ROWS)]
+        for y, row in enumerate(state["field_data"]):
+            for x, cell in enumerate(row):
+                if cell:
+                    block = Block(self.sprites, pygame.Vector2(x, y), (150, 150, 150))  # màu xám nhạt
+                    self.field_data[y][x] = block
+
+        # Cập nhật thông tin điểm
+        self.current_score = state["score"]
+        self.current_level = state["level"]
+        self.current_lines = state["lines"]
+        self.game_over = state["game_over"]
+
+        # Dừng timer nếu đối thủ đã thua
+        if self.game_over:
+            self.timers['vertical move'].deactivate()
     def calculate_score(self, num_lines):
         self.current_lines += num_lines
         self.current_score += SCORE_DATA[num_lines] * self.current_level
@@ -295,13 +330,14 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
     def run(self):
         #update
-
+        if not self.timers['print'].active:
+            print(self.get_state())
+            self.timers['print'].activate()
         if not self.game_over:
-            self.input()  # Handle player input (if bot disabled)
-            self.timer_update()  # Update timers (movement, actions)
-            self.sprites.update()  # Update sprite positions based on their internal logic (e.g., rect)
+            self.input()
+            self.timer_update()
+            self.sprites.update()
 
-            # Run bot logic if enabled and game is not over
             if self.bot_enable and not self.game_over:
                 self.all_possible_move()
         # drawing
