@@ -63,26 +63,24 @@ class Game:
 
     def set_state(self, state):
         if not state: return
-        # Xóa sprite cũ
-        self.sprites.empty()
 
-        # Tạo lại field_data và sprite từ dữ liệu nhận được
+        self.sprites.empty()
         self.field_data = [[0 for _ in range(COLUMNS)] for _ in range(ROWS)]
+
         for y, row in enumerate(state["field_data"]):
             for x, cell in enumerate(row):
                 if cell:
-                    block = Block(self.sprites, pygame.Vector2(x, y), (150, 150, 150))  # màu xám nhạt
+                    block = Block(self.sprites, pygame.Vector2(x, y) - BLOCK_OFFSET, (150, 150, 150))  # xám cho đối thủ
                     self.field_data[y][x] = block
 
-        # Cập nhật thông tin điểm
         self.current_score = state["score"]
         self.current_level = state["level"]
         self.current_lines = state["lines"]
         self.game_over = state["game_over"]
-
-        # Dừng timer nếu đối thủ đã thua
+        self.update_score(self.current_lines, self.current_score, self.current_level)
         if self.game_over:
             self.timers['vertical move'].deactivate()
+
     def calculate_score(self, num_lines):
         self.current_lines += num_lines
         self.current_score += SCORE_DATA[num_lines] * self.current_level
@@ -93,7 +91,8 @@ class Game:
             self.down_speed *= 0.75
             self.down_speed_faster = self.down_speed * 0.3
             self.timers['vertical move'].duration = self.down_speed
-        self.update_score(self.current_lines,self.current_score,self.current_level)
+        self.update_score(self.current_lines, self.current_score, self.current_level)
+
     def create_new_tetromino(self):
 
         self.check_finished_rows()

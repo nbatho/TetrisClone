@@ -57,20 +57,6 @@ class Main:
         cell_size = CELL_SIZE
         x_offset = WINDOW_WIDTH + PADDING
         y_offset = PADDING
-
-        # Vẽ các block đã rơi
-        for y, row in enumerate(field_data):
-            for x, cell in enumerate(row):
-                if cell:
-                    rect = pygame.Rect(
-                        x_offset + x * cell_size,
-                        y_offset + y * cell_size,
-                        cell_size,
-                        cell_size
-                    )
-                    pygame.draw.rect(self.display_surface, (150, 150, 150), rect)  # màu block
-                    pygame.draw.rect(self.display_surface, (50, 50, 50), rect, 1)  # viền ô
-
         # Vẽ lưới ngang và dọc
         for col in range(1, COLUMNS):
             x = x_offset + col * cell_size
@@ -82,8 +68,21 @@ class Main:
         # Vẽ viền quanh toàn bộ bảng
         board_rect = pygame.Rect(x_offset, y_offset, COLUMNS * cell_size, ROWS * cell_size)
         pygame.draw.rect(self.display_surface, LINE_COLOR, board_rect, 2, 2)
+        # Vẽ các block đã rơi
+        for y, row in enumerate(field_data):
+            for x, cell in enumerate(row):
+                if cell:
+                    rect = pygame.Rect(
+                        x_offset + x * cell_size,
+                        y_offset + y * cell_size,
+                        cell_size,
+                        cell_size
+                    )
+                    pygame.draw.rect(self.display_surface, (150, 150, 150), rect)  # màu block
+                    # pygame.draw.rect(self.display_surface, (50, 50, 50), rect, 1)  # viền ô
+
     def run(self):
-        game_running  = True
+        game_running = True
         while game_running:
             playing = True
             selection = main_menu()
@@ -95,19 +94,24 @@ class Main:
                 self.game = Game(self.get_next_shape, self.update_score, bot_enable=False, x_offset=0)
                 self.score = Score(x_offset=0)
                 self.preview = Preview(x_offset=0)
-                if self.play == 'vsBot':
+
+                if self.play == "vsBot":
                     self.opponent_game = Game(self.get_opponent_next_shape, self.update_opponent_score,
-                                              bot_enable=self.BOT, x_offset=WINDOW_WIDTH)
+                                              bot_enable=True, x_offset=WINDOW_WIDTH)
                     self.opponent_score = Score(x_offset=WINDOW_WIDTH)
                     self.opponent_preview = Preview(x_offset=WINDOW_WIDTH)
-
-                if self.play == "vsPlayer":
+                elif self.play == "vsPlayer":
+                    self.opponent_game = Game(self.get_opponent_next_shape, self.update_opponent_score,
+                                              bot_enable=False, x_offset=WINDOW_WIDTH, is_remoted=True)
+                    self.opponent_score = Score(x_offset=WINDOW_WIDTH)
+                    self.opponent_preview = Preview(x_offset=WINDOW_WIDTH)
                     try:
                         self.player_id = self.network.send("get")
                         print(f"Connected as Player {self.player_id}")
                     except:
                         print("Could not connect to server.")
                         self.play = "single"
+
                 while playing:
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
@@ -117,26 +121,38 @@ class Main:
                             if event.key == pygame.K_ESCAPE:
                                 playing = False
                                 break
-                            if event.key == pygame.K_r:  # Nhấn phím 'R' để reset
+                            if event.key == pygame.K_r:
                                 self.game.reset()
 
-                    # display
+                    # update and draw player
                     self.display_surface.fill(GRAY)
                     self.game.run()
                     self.score.run()
                     self.preview.run(self.next_shapes)
-                    if self.play == 'vsBot':
+
+                    if self.play == "vsBot":
                         self.opponent_game.run()
                         self.opponent_score.run()
                         self.opponent_preview.run(self.opponent_next_shapes)
+
                     elif self.play == "vsPlayer":
                         my_state = self.game.get_state()
                         opponent_state = self.network.send(my_state)
                         if opponent_state:
-                            self.draw_opponent_grid(opponent_state["field_data"])
-                    #updating the game
+                            self.opponent_game.set_state(opponent_state)
+                        self.opponent_game.run()
+                        self.opponent_score.run()
+
                     pygame.display.update()
                     self.clock.tick(60)
+
+            elif selection == "options":
+                options()
+            elif selection == "quit":
+                game_running = False
+                pygame.quit()
+                sys.exit()
+
 
             elif selection == "options":
                 options()
