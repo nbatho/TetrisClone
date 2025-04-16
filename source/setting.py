@@ -46,3 +46,6 @@ TETROMINOS = {
 }
 
 SCORE_DATA = {1: 40, 2: 100, 3: 300, 4: 1200}
+
+#Volume
+VOLUME = 0.5
