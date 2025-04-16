@@ -8,7 +8,9 @@ from preview import Preview
 from random import choice
 from menu import main_menu, options
 from network import Network
+from sound import SoundManager
 import time
+
 class Main:
     def __init__(self):
         # general
@@ -16,6 +18,15 @@ class Main:
         self.display_surface = pygame.display.set_mode((WINDOW_WIDTH*2,WINDOW_HEIGHT))
         self.clock = pygame.time.Clock()
         pygame.display.set_caption('TetrisClone')
+
+        #Sound
+        pygame.mixer.init()
+
+        self.sound = SoundManager()
+        pygame.mixer.music.set_volume(VOLUME)
+        self.sound.music_theme()
+
+
         #networking
         self.network = Network()
         self.player_id = None
@@ -160,6 +171,15 @@ class Main:
                 game_running = False
                 pygame.quit()
                 sys.exit()
+
+    # def show_massage(self, text, duration = 3):
+    #     font = pygame.font.Font(None, 80)
+    #     message_surface = font.render(text, True, (255, 255, 255))
+    #     rect = message_surface.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+    
+    #     self.display_surface.blit(message_surface, rect)
+    #     pygame.display.update()
+    #     pygame.time.delay(duration * 1000)
 
 if __name__ == '__main__':
     main = Main()
