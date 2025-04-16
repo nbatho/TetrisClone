@@ -52,7 +52,6 @@ class Main:
         bot_next_shape = self.opponent_next_shapes.pop(0)
         self.opponent_next_shapes.append(choice(list(TETROMINOS.keys())))
         return bot_next_shape
-
     def draw_opponent_grid(self, field_data):
         cell_size = CELL_SIZE
         x_offset = WINDOW_WIDTH + PADDING
@@ -110,8 +109,30 @@ class Main:
                         print(f"Connected as Player {self.player_id}")
                     except:
                         print("Could not connect to server.")
-                        self.play = "single"
+                        # self.play = "single"
+                    # Chờ đến khi cả 2 người chơi sẵn sàng
+                    waiting = True
+                    font = pygame.font.SysFont("Arial", 36)
 
+                    while waiting:
+                        my_state = self.game.get_state()
+                        my_state["ready"] = True  # Đánh dấu đã sẵn sàng
+                        opponent_state = self.network.send(my_state)
+
+                        self.display_surface.fill("black")
+                        text = font.render("Waiting for other player...", True, "white")
+                        self.display_surface.blit(text, (WINDOW_WIDTH // 2 - 250, WINDOW_HEIGHT // 2))
+                        pygame.display.update()
+
+                        if opponent_state and opponent_state.get("both_ready"):
+                            waiting = False
+
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                pygame.quit()
+                                sys.exit()
+
+                        time.sleep(0.5)
                 while playing:
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
@@ -129,31 +150,21 @@ class Main:
                     self.game.run()
                     self.score.run()
                     self.preview.run(self.next_shapes)
-
                     if self.play == "vsBot":
                         self.opponent_game.run()
                         self.opponent_score.run()
                         self.opponent_preview.run(self.opponent_next_shapes)
-
                     elif self.play == "vsPlayer":
                         my_state = self.game.get_state()
+                        my_state["ready"] = True
                         opponent_state = self.network.send(my_state)
-                        if opponent_state:
+                        if isinstance(opponent_state, dict) and "field_data" in opponent_state:
                             self.opponent_game.set_state(opponent_state)
                         self.opponent_game.run()
                         self.opponent_score.run()
 
                     pygame.display.update()
                     self.clock.tick(60)
-
-            elif selection == "options":
-                options()
-            elif selection == "quit":
-                game_running = False
-                pygame.quit()
-                sys.exit()
-
-
             elif selection == "options":
                 options()
             elif selection == "quit":

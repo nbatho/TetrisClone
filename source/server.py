@@ -2,7 +2,7 @@ import socket
 from _thread import *
 import pickle
 
-server = socket.gethostname()
+server = "0.0.0.0"
 port = 5555
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -12,7 +12,7 @@ try:
 except socket.error as e:
     print(str(e))
 
-s.listen(2)
+s.listen(5 )
 print("Waiting for a connection, Server Started")
 
 # Lưu trạng thái 2 người chơi
@@ -28,13 +28,18 @@ def threaded_client(conn, player):
         try:
             data = pickle.loads(conn.recv(4096))
             players[player] = data
-
             if not data:
                 print("Disconnected")
                 break
 
             opponent = 1 - player
             reply = players[opponent] if players[opponent] else {}
+
+            if 'ready' in players[0] and 'ready' in players[1]:
+                reply["both_ready"] = True
+                print("Ca 2 da vao phong")
+            else:
+               print("thieu 1 hoac 0 co nguoi choi nao")
             conn.sendall(pickle.dumps(reply))
 
         except:

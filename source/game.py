@@ -48,6 +48,8 @@ class Game:
         self.current_level = 1
         self.current_score = 0
         self.current_lines = 0
+        # player
+        self.ready = False
 
     def get_state(self):
         # Lưu lưới game dạng đơn giản
@@ -59,6 +61,7 @@ class Game:
             "level": self.current_level,
             "lines": self.current_lines,
             "game_over": self.game_over,
+            "ready": self.ready,
         }
 
     def set_state(self, state):
@@ -329,9 +332,9 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
     def run(self):
         #update
-        if not self.timers['print'].active:
-            print(self.get_state())
-            self.timers['print'].activate()
+        # if not self.timers['print'].active:
+        #     print(self.get_state())
+        #     self.timers['print'].activate()
         if not self.game_over:
             self.input()
             self.timer_update()
