@@ -37,9 +37,26 @@ def threaded_client(conn, player):
 
             if 'ready' in players[0] and 'ready' in players[1]:
                 reply["both_ready"] = True
-                print("Ca 2 da vao phong")
-            else:
-               print("thieu 1 hoac 0 co nguoi choi nao")
+                # print("Ca 2 da vao phong")
+
+            if 'game_over' in players[0] and 'game_over' in players[1]:
+                if players[0]['game_over'] and players[1]['game_over']:
+                    p0_score = players[0].get("score", 0)
+                    p1_score = players[1].get("score", 0)
+
+                    if p0_score > p1_score:
+                        players[0]["result"] = "win"
+                        players[1]["result"] = "lose"
+                    elif p0_score < p1_score:
+                        players[0]["result"] = "lose"
+                        players[1]["result"] = "win"
+                    else:
+                        players[0]["result"] = "draw"
+                        players[1]["result"] = "draw"
+                else:
+                    players[0]["result"] = None
+                    players[1]["result"] = None
+                reply["result"] = players[player].get("result", None)
             conn.sendall(pickle.dumps(reply))
 
         except:

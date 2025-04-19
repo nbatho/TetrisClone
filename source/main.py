@@ -1,4 +1,3 @@
-import pygame, sys
 from setting import *
 
 # components
@@ -9,6 +8,43 @@ from random import choice
 from menu import main_menu, options
 from network import Network
 import time
+def input_ip_screen():
+    font = pygame.font.SysFont("Arial", 36)
+    input_text = ""
+    active = True
+
+    input_rect = pygame.Rect(WINDOW_WIDTH - 150, WINDOW_HEIGHT // 2 - 25, 300, 50)
+    color_inactive = pygame.Color("gray")
+    color_active = pygame.Color("white")
+    color = color_active
+
+    while active:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    active = False
+                    return input_text.strip() if input_text.strip() else "127.0.0.1"
+                elif event.key == pygame.K_BACKSPACE:
+                    input_text = input_text[:-1]
+                else:
+                    input_text += event.unicode
+
+        screen = pygame.display.get_surface()
+        screen.fill((0, 0, 0))
+
+        # Vẽ ô nhập
+        pygame.draw.rect(screen, color, input_rect, 2)
+        text_surface = font.render(input_text, True, color)
+        screen.blit(text_surface, (input_rect.x + 10, input_rect.y + 10))
+
+        label = font.render("Enter IP host (Press ENTER)", True, "white")
+        screen.blit(label, (WINDOW_WIDTH // 2 + 115, WINDOW_HEIGHT // 2 - 80))
+
+        pygame.display.flip()
+
 class Main:
     def __init__(self):
         # general
@@ -17,7 +53,7 @@ class Main:
         self.clock = pygame.time.Clock()
         pygame.display.set_caption('TetrisClone')
         #networking
-        self.network = Network()
+        self.network = None
         self.player_id = None
 
         self.BOT = False
@@ -34,8 +70,6 @@ class Main:
         self.opponent_score = None
         self.preview = None
         self.opponent_preview = None
-
-
     def update_score(self,lines,score,level):
         self.score.lines = lines
         self.score.score = score
@@ -80,6 +114,12 @@ class Main:
                     pygame.draw.rect(self.display_surface, (150, 150, 150), rect)  # màu block
                     # pygame.draw.rect(self.display_surface, (50, 50, 50), rect, 1)  # viền ô
 
+    def show_result(self, result_text):
+        font = pygame.font.SysFont("Arial", 48)
+        text_surface = font.render(result_text, True, "white")
+        self.display_surface.blit(text_surface, (WINDOW_WIDTH // 2 - 150, WINDOW_HEIGHT // 2))
+        pygame.display.update()
+        pygame.time.delay(100)
     def run(self):
         game_running = True
         while game_running:
@@ -100,6 +140,8 @@ class Main:
                     self.opponent_score = Score(x_offset=WINDOW_WIDTH)
                     self.opponent_preview = Preview(x_offset=WINDOW_WIDTH)
                 elif self.play == "vsPlayer":
+                    host_ip = input_ip_screen()
+                    self.network = Network(host_ip)
                     self.opponent_game = Game(self.get_opponent_next_shape, self.update_opponent_score,
                                               bot_enable=False, x_offset=WINDOW_WIDTH, is_remoted=True)
                     self.opponent_score = Score(x_offset=WINDOW_WIDTH)
@@ -121,7 +163,7 @@ class Main:
 
                         self.display_surface.fill("black")
                         text = font.render("Waiting for other player...", True, "white")
-                        self.display_surface.blit(text, (WINDOW_WIDTH // 2 - 250, WINDOW_HEIGHT // 2))
+                        self.display_surface.blit(text, (WINDOW_WIDTH // 2 + 150, WINDOW_HEIGHT // 2 - 20))
                         pygame.display.update()
 
                         if opponent_state and opponent_state.get("both_ready"):
@@ -158,6 +200,19 @@ class Main:
                         my_state = self.game.get_state()
                         my_state["ready"] = True
                         opponent_state = self.network.send(my_state)
+                        result = opponent_state.get("result", None)
+
+                        if result in ["win", "lose", "draw"]:
+                            result_text = {
+                                "win": "You Win!",
+                                "lose": "You Lose!",
+                                "draw": "Draw!"
+                            }[result]
+
+
+                            # Hoặc dùng Pygame:
+                            self.show_result(result_text)
+
                         if isinstance(opponent_state, dict) and "field_data" in opponent_state:
                             self.opponent_game.set_state(opponent_state)
                         self.opponent_game.run()
