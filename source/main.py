@@ -182,6 +182,12 @@ class Main:
                             sys.exit()
                         elif event.type == pygame.KEYDOWN:
                             if event.key == pygame.K_ESCAPE:
+                                if self.play == "vsPlayer" and hasattr(self, "network"):
+                                    try:
+                                        self.network.send("exit")
+                                        self.network.client.close()
+                                    except:
+                                        pass
                                 playing = False
                                 break
                             if event.key == pygame.K_r:
@@ -200,18 +206,15 @@ class Main:
                         my_state = self.game.get_state()
                         my_state["ready"] = True
                         opponent_state = self.network.send(my_state)
-                        result = opponent_state.get("result", None)
-
-                        if result in ["win", "lose", "draw"]:
-                            result_text = {
-                                "win": "You Win!",
-                                "lose": "You Lose!",
-                                "draw": "Draw!"
-                            }[result]
-
-
-                            # Hoặc dùng Pygame:
-                            self.show_result(result_text)
+                        if opponent_state and isinstance(opponent_state, dict):
+                            result = opponent_state.get("result", None)
+                            if result in ["win", "lose", "draw"]:
+                                result_text = {
+                                    "win": "You Win!",
+                                    "lose": "You Lose!",
+                                    "draw": "Draw!"
+                                }[result]
+                                self.show_result(result_text)
 
                         if isinstance(opponent_state, dict) and "field_data" in opponent_state:
                             self.opponent_game.set_state(opponent_state)

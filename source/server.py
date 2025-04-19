@@ -62,9 +62,16 @@ def threaded_client(conn, player):
         except:
             break
 
-    print("Lost connection to player", player)
+    print(" Player", player, "mất kết nối.")
     players[player] = {}
+
+    # Nếu cả hai player đều trống → reset lại phòng
+    if players[0] == {} and players[1] == {}:
+        print(" Tất cả người chơi đã rời. Đặt lại trạng thái.")
+        global connections
+        connections = 0  # reset số lượng kết nối (cho phép người chơi mới vào lại)
     conn.close()
+
 
 # Chờ tối đa 2 người chơi
 while True:
@@ -72,4 +79,9 @@ while True:
     print("Connected to:", addr)
 
     start_new_thread(threaded_client, (conn, connections))
-    connections += 1
+    if connections < 2:
+        start_new_thread(threaded_client, (conn, connections))
+        connections += 1
+    else:
+        print("️Đã đủ 2 người chơi. Từ chối kết nối mới.")
+        conn.close()
