@@ -1,6 +1,11 @@
+import pygame
 from setting import *
 from random import choice
 from timer import Timer
+from sound import SoundManager
+
+pygame.mixer.init()
+music_landing = pygame.mixer.Sound("E:/Code/Python/Project/TetrisClone/sounds/landing.wav")
 class Game:
     def __init__(self, get_next_shape, update_score, bot_enable = False,x_offset = 0, is_remoted = False):
         #general
@@ -13,6 +18,7 @@ class Game:
         self.update_score = update_score
         self.is_remoted = is_remoted
         self.game_over = False
+        self.music_landing = music_landing
         #bot
         self.bot_enable = bot_enable
         # lines
@@ -48,6 +54,8 @@ class Game:
         self.current_level = 1
         self.current_score = 0
         self.current_lines = 0
+        # player
+        self.ready = False
 
     def get_state(self):
         # Lưu lưới game dạng đơn giản
@@ -59,6 +67,7 @@ class Game:
             "level": self.current_level,
             "lines": self.current_lines,
             "game_over": self.game_over,
+            "ready": self.ready,
         }
 
     def set_state(self, state):
@@ -227,6 +236,7 @@ class Game:
 
         # Thả khối xuống vị trí tốt nhất
         self.tetrominos.hard_drop()
+        self.music_landing.play()
     def timer_update(self):
         if self.game_over: return
         for timer in self.timers.values():
@@ -329,9 +339,9 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
     def run(self):
         #update
-        if not self.timers['print'].active:
-            print(self.get_state())
-            self.timers['print'].activate()
+        # if not self.timers['print'].active:
+        #     print(self.get_state())
+        #     self.timers['print'].activate()
         if not self.game_over:
             self.input()
             self.timer_update()
@@ -355,6 +365,10 @@ class Tetromino():
         self.color = TETROMINOS[shape]['color']
         self.create_new_tetromino = create_new_tetromino
         self.field_data = field_data
+
+        #sound
+        self.music_landing = music_landing
+        
         # create blocks
         self.blocks = [Block(group,pos,self.color) for pos in self.block_positions]
 
@@ -412,6 +426,7 @@ class Tetromino():
         else:
             for block in self.blocks:
                 self.field_data[int(block.pos.y)][int(block.pos.x)] = block
+            self.music_landing.play()
             self.create_new_tetromino()
     def hard_drop(self):
         while not self.next_move_vertical_collide(self.blocks, 1):
@@ -420,6 +435,9 @@ class Tetromino():
 
         for block in self.blocks:
             self.field_data[int(block.pos.y)][int(block.pos.x)] = block
+            self.music_landing.play()
+            pygame.mixer.music.set_volume(LANDING_VOLUME)
+
         if self.create_new_tetromino:
             self.create_new_tetromino()
     def move_horizontal(self,amount):
