@@ -1,5 +1,5 @@
-import pygame, sys
 from setting import *
+from leaderboard import update_leaderboard, draw_leaderboard
 
 # components
 from game import Game
@@ -10,6 +10,44 @@ from menu import main_menu, options
 from network import Network
 from sound import SoundManager
 import time
+
+def input_ip_screen():
+    font = pygame.font.Font("E:/Code/Python/Project/TetrisClone/graphics/Russo_One.ttf", 36)
+    input_text = ""
+    active = True
+
+    input_rect = pygame.Rect(WINDOW_WIDTH - 150, WINDOW_HEIGHT // 2 - 25, 300, 70) 
+    color_inactive = pygame.Color("gray")
+    color_active = pygame.Color("white")
+    color = color_active
+
+    while active:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    active = False
+                    return input_text.strip() if input_text.strip() else "127.0.0.1"
+                elif event.key == pygame.K_BACKSPACE:
+                    input_text = input_text[:-1]
+                else:
+                    input_text += event.unicode
+
+        screen = pygame.display.get_surface()
+        screen.fill((0, 0, 0))
+
+        # Vẽ ô nhập
+        pygame.draw.rect(screen, color, input_rect, 2)
+        text_surface = font.render(input_text, True, color)
+        screen.blit(text_surface, (input_rect.x + 10, input_rect.y + 10))
+
+        # label = font.render("Enter IP host (Press ENTER)", True, "white")
+        # screen.blit(label, (WINDOW_WIDTH // 2 + 115, WINDOW_HEIGHT // 2 - 80))
+        label = font.render("Enter IP host", True, "white")
+        screen.blit(label, (WINDOW_WIDTH // 2 + 175 , WINDOW_HEIGHT // 2 - 80))
+        pygame.display.flip()
 
 class Main:
     def __init__(self):
@@ -23,12 +61,11 @@ class Main:
         pygame.mixer.init()
 
         self.sound = SoundManager()
-        pygame.mixer.music.set_volume(VOLUME)
+        pygame.mixer.music.set_volume(MASTER_VOLUME)
         self.sound.music_theme()
 
-
         #networking
-        self.network = Network()
+        self.network = None
         self.player_id = None
 
         self.BOT = False
@@ -45,8 +82,6 @@ class Main:
         self.opponent_score = None
         self.preview = None
         self.opponent_preview = None
-
-
     def update_score(self,lines,score,level):
         self.score.lines = lines
         self.score.score = score
@@ -63,7 +98,6 @@ class Main:
         bot_next_shape = self.opponent_next_shapes.pop(0)
         self.opponent_next_shapes.append(choice(list(TETROMINOS.keys())))
         return bot_next_shape
-
     def draw_opponent_grid(self, field_data):
         cell_size = CELL_SIZE
         x_offset = WINDOW_WIDTH + PADDING
@@ -92,6 +126,12 @@ class Main:
                     pygame.draw.rect(self.display_surface, (150, 150, 150), rect)  # màu block
                     # pygame.draw.rect(self.display_surface, (50, 50, 50), rect, 1)  # viền ô
 
+    def show_result(self, result_text):
+        font = pygame.font.SysFont("Arial", 48)
+        text_surface = font.render(result_text, True, "white")
+        self.display_surface.blit(text_surface, (WINDOW_WIDTH // 2 - 150, WINDOW_HEIGHT // 2))
+        pygame.display.update()
+        pygame.time.delay(100)
     def run(self):
         game_running = True
         while game_running:
@@ -112,6 +152,8 @@ class Main:
                     self.opponent_score = Score(x_offset=WINDOW_WIDTH)
                     self.opponent_preview = Preview(x_offset=WINDOW_WIDTH)
                 elif self.play == "vsPlayer":
+                    host_ip = input_ip_screen()
+                    self.network = Network(host_ip)
                     self.opponent_game = Game(self.get_opponent_next_shape, self.update_opponent_score,
                                               bot_enable=False, x_offset=WINDOW_WIDTH, is_remoted=True)
                     self.opponent_score = Score(x_offset=WINDOW_WIDTH)
@@ -121,8 +163,30 @@ class Main:
                         print(f"Connected as Player {self.player_id}")
                     except:
                         print("Could not connect to server.")
-                        self.play = "single"
+                        # self.play = "single"
+                    # Chờ đến khi cả 2 người chơi sẵn sàng
+                    waiting = True
+                    font = pygame.font.SysFont("Arial", 36)
 
+                    while waiting:
+                        my_state = self.game.get_state()
+                        my_state["ready"] = True  # Đánh dấu đã sẵn sàng
+                        opponent_state = self.network.send(my_state)
+
+                        self.display_surface.fill("black")
+                        text = font.render("Waiting for other player...", True, "white")
+                        self.display_surface.blit(text, (WINDOW_WIDTH // 2 + 150, WINDOW_HEIGHT // 2 - 20))
+                        pygame.display.update()
+
+                        if opponent_state and opponent_state.get("both_ready"):
+                            waiting = False
+
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                pygame.quit()
+                                sys.exit()
+
+                        time.sleep(0.5)
                 while playing:
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
@@ -130,6 +194,12 @@ class Main:
                             sys.exit()
                         elif event.type == pygame.KEYDOWN:
                             if event.key == pygame.K_ESCAPE:
+                                if self.play == "vsPlayer" and hasattr(self, "network"):
+                                    try:
+                                        self.network.send("exit")
+                                        self.network.client.close()
+                                    except:
+                                        pass
                                 playing = False
                                 break
                             if event.key == pygame.K_r:
@@ -140,46 +210,49 @@ class Main:
                     self.game.run()
                     self.score.run()
                     self.preview.run(self.next_shapes)
-
                     if self.play == "vsBot":
                         self.opponent_game.run()
                         self.opponent_score.run()
                         self.opponent_preview.run(self.opponent_next_shapes)
-
                     elif self.play == "vsPlayer":
                         my_state = self.game.get_state()
+                        my_state["ready"] = True
                         opponent_state = self.network.send(my_state)
-                        if opponent_state:
+                        if opponent_state and isinstance(opponent_state, dict):
+                            result = opponent_state.get("result", None)
+                            if result in ["win", "lose", "draw"]:
+                                result_text = {
+                                    "win": "You Win!",
+                                    "lose": "You Lose!",
+                                    "draw": "Draw!"
+                                }[result]
+                                self.show_result(result_text)
+
+                        if isinstance(opponent_state, dict) and "field_data" in opponent_state:
                             self.opponent_game.set_state(opponent_state)
                         self.opponent_game.run()
                         self.opponent_score.run()
 
                     pygame.display.update()
                     self.clock.tick(60)
-
             elif selection == "options":
-                options()
-            elif selection == "quit":
-                game_running = False
-                pygame.quit()
-                sys.exit()
+                #options()
+                #tes:
+                font = pygame.font.Font("E:/Code/Python/Project/TetrisClone/graphics/Russo_One.ttf", 36)
+                show_leaderboard = True
+                while show_leaderboard:
+                    draw_leaderboard(self.display_surface, font, "solo")  # hoặc "vsBot", tùy mode
 
-
-            elif selection == "options":
-                options()
-            elif selection == "quit":
-                game_running = False
-                pygame.quit()
-                sys.exit()
-
-    # def show_massage(self, text, duration = 3):
-    #     font = pygame.font.Font(None, 80)
-    #     message_surface = font.render(text, True, (255, 255, 255))
-    #     rect = message_surface.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-    
-    #     self.display_surface.blit(message_surface, rect)
-    #     pygame.display.update()
-    #     pygame.time.delay(duration * 1000)
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            sys.exit()
+                        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                            show_leaderboard = False
+                        elif selection == "quit":
+                            game_running = False
+                            pygame.quit()
+                            sys.exit()
 
 if __name__ == '__main__':
     main = Main()
