@@ -125,16 +125,16 @@ class Game:
                     holes += 1
         return holes
     def evaluate_board(self,matrix):
-        height = 0
         bumpiness = 0
         hole = self.calculate_holes(matrix)
         complete_line = self.check_finished_rows()
-        ls_height = [0]*COLUMNS
         # Heurisitic weights
         a = -0.510066  # Aggregate Height Weight
         b = 0.760666  # Complete Lines Weight
         c = -0.35663  # Holes Weight
         d = -0.184483  # Bumpiness Weight
+        height = 0
+        ls_height = [0]*COLUMNS
         for j in range(COLUMNS):
             for i in range(ROWS):
                 if matrix[i][j] != 0:
@@ -281,7 +281,6 @@ class Game:
                 self.down_pressed = False
                 self.timers['vertical move'].duration = self.down_speed
     def check_finished_rows(self):
-
         # get the full row indexes
         delete_rows = []
         for i,row in enumerate(self.field_data):

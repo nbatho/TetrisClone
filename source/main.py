@@ -129,10 +129,11 @@ class Main:
             if selection in ["single", "vsBot", "vsPlayer"]:
                 self.play = selection
                 self.BOT = (selection == "vsBot")
-
-                self.game = Game(self.get_next_shape, self.update_score, bot_enable=False, x_offset=0)
-                self.score = Score(x_offset=0)
-                self.preview = Preview(x_offset=0)
+                if self.play == 'single': offset = WINDOW_WIDTH//2
+                else: offset = 0
+                self.game = Game(self.get_next_shape, self.update_score, bot_enable=False, x_offset=offset)
+                self.score = Score(x_offset=offset)
+                self.preview = Preview(x_offset=offset)
 
                 if self.play == "vsBot":
                     self.opponent_game = Game(self.get_opponent_next_shape, self.update_opponent_score,
