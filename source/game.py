@@ -13,6 +13,8 @@ class Game:
         self.update_score = update_score
         self.is_remoted = is_remoted
         self.game_over = False
+        #paused
+        self.paused = False
         #bot
         self.bot_enable = bot_enable
         # lines
@@ -42,7 +44,8 @@ class Game:
             'print':Timer(1000),
             'calculate score': Timer(750),
         }
-        self.timers['vertical move'].activate()
+        if not self.paused:
+            self.timers['vertical move'].activate()
 
         # score
         self.current_level = 1
@@ -50,7 +53,6 @@ class Game:
         self.current_lines = 0
         # player
         self.ready = False
-
     def get_state(self):
         # Lưu lưới game dạng đơn giản
         field_serialized = [[1 if cell else 0 for cell in row] for row in self.field_data]
@@ -149,7 +151,7 @@ class Game:
         return score
 
     def all_possible_move(self):
-        if self.game_over: return
+        if self.game_over or self.paused: return
         if not self.timers['calculate score'].active:
             best_score = float('-inf')
             best_state = None
@@ -230,12 +232,22 @@ class Game:
 
         # Thả khối xuống vị trí tốt nhất
         self.tetrominos.hard_drop()
+
+    def pause(self):
+        self.paused = True
+        for timer in self.timers.values():
+            timer.deactivate()
+
+    def resume(self):
+        self.paused = False
+        self.timers['vertical move'].activate()
     def timer_update(self):
-        if self.game_over: return
+        if self.game_over and self.paused: return
         for timer in self.timers.values():
             timer.update()
+
     def move_down(self):
-        if self.game_over: return
+        if self.game_over or self.paused: return
         self.tetrominos.move_down()
     def draw_grid(self):
         for col in range(1,COLUMNS):
@@ -251,8 +263,8 @@ class Game:
             return
         keys = pygame.key.get_pressed()
 
-        if self.game_over: return
-        if not self.bot_enable:
+        if self.game_over and self.paused: return
+        if not self.bot_enable and not self.paused:
             if not self.timers['horizontal move'].active:
                 if keys[pygame.K_LEFT]:
                     self.tetrominos.move_horizontal(-1)
@@ -331,16 +343,14 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
     def run(self):
         #update
-        # if not self.timers['print'].active:
-        #     print(self.get_state())
-        #     self.timers['print'].activate()
-        if not self.game_over:
-            self.input()
-            self.timer_update()
-            self.sprites.update()
+        if self.game_over:
+            return
+        self.input()
+        self.timer_update()
+        self.sprites.update()
 
-            if self.bot_enable and not self.game_over:
-                self.all_possible_move()
+        if self.bot_enable:
+            self.all_possible_move()
         # drawing
         self.surface.fill(GRAY)
         self.sprites.draw(self.surface)

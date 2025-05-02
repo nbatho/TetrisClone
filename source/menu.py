@@ -2,12 +2,13 @@ import pygame, sys
 from button import Button
 import os
 
+from setting import *
+
 # pygame.init()
 
-SCREEN = pygame.display.set_mode((1280, 720))
+SCREEN = pygame.display.set_mode((WINDOW_WIDTH*2, WINDOW_HEIGHT))
 pygame.display.set_caption("Menu")
-
-BG = pygame.transform.scale(pygame.image.load("../graphics/Background.jpg"), (1280, 720))
+BG = pygame.transform.scale(pygame.image.load("../graphics/Background.jpg"), (WINDOW_WIDTH*2, WINDOW_HEIGHT))
 def play_mode_menu():
     while True:
         SCREEN.blit(BG, (0, 0))
@@ -93,6 +94,52 @@ def options():
                 
         pygame.display.update()
 
+
+def paused_screen():
+    clock = pygame.time.Clock()
+    while True:
+
+        # Văn bản và nút
+        paused_text = get_font(70).render("PAUSED", True, "white")
+        save_text = get_font(30).render("SAVE", True, "white")
+        main_text = get_font(30).render("HOME", True, "white")
+        reset_text = get_font(30).render("RESET", True, "white")
+        paused_rect = paused_text.get_rect(center=(WINDOW_WIDTH , 300))
+        main_rect = main_text.get_rect(center=(WINDOW_WIDTH -200, 400))
+        save_rect = save_text.get_rect(center=(WINDOW_WIDTH, 400))
+        reset_rect = reset_text.get_rect(center=(WINDOW_WIDTH + 200, 400))
+
+        padding = 10
+        pygame.draw.rect(SCREEN, (128,128,128,0), (305, 180, 600, 300))
+        pygame.draw.rect(SCREEN, "white", (305, 180,600,300), width=2)
+        pygame.draw.rect(SCREEN, "white", save_rect.inflate(padding, padding), width=2)
+        pygame.draw.rect(SCREEN, "white", main_rect.inflate(padding, padding), width=2)
+        pygame.draw.rect(SCREEN, "white", reset_rect.inflate(padding, padding), width=2)
+        SCREEN.blit(paused_text, paused_rect)
+        SCREEN.blit(save_text, save_rect)
+        SCREEN.blit(main_text, main_rect)
+        SCREEN.blit(reset_text, reset_rect)
+
+
+        # Resume bằng ESC
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return "resume"
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if save_rect.collidepoint(event.pos):
+                    return "save"
+                elif main_rect.collidepoint(event.pos):
+                    return "home"
+                elif reset_rect.collidepoint(event.pos):
+                    return "reset"
+
+        pygame.display.update()
+        clock.tick(60)
+
 def main_menu():
     selected_index = 0
     while True:
@@ -114,8 +161,8 @@ def main_menu():
             base_color="#d7fcd4", hovering_color="White"
             )
         QUIT_BUTTON = Button(
-            image=pygame.image.load("../graphics/Quit Rect.png"), 
-            pos=(640, 550), text_input="QUIT", font=get_font(50), 
+            image=pygame.image.load("../graphics/Quit Rect.png"),
+            pos=(640, 550), text_input="QUIT", font=get_font(50),
             base_color="#d7fcd4", hovering_color="White"
             )
 
@@ -124,7 +171,7 @@ def main_menu():
         for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON]:
             button.changeColor(MENU_MOUSE_POS)
             button.update(SCREEN)
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()

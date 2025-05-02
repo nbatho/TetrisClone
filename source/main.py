@@ -5,9 +5,12 @@ from game import Game
 from score import Score
 from preview import Preview
 from random import choice
-from menu import main_menu, options
 from network import Network
 import time
+
+from menu import *
+
+
 def input_ip_screen():
     font = pygame.font.SysFont("Arial", 36)
     input_text = ""
@@ -129,7 +132,7 @@ class Main:
             if selection in ["single", "vsBot", "vsPlayer"]:
                 self.play = selection
                 self.BOT = (selection == "vsBot")
-                if self.play == 'single': offset = WINDOW_WIDTH//2
+                if self.play == 'single': offset = WINDOW_WIDTH//2 + 50
                 else: offset = 0
                 self.game = Game(self.get_next_shape, self.update_score, bot_enable=False, x_offset=offset)
                 self.score = Score(x_offset=offset)
@@ -189,10 +192,25 @@ class Main:
                                         self.network.client.close()
                                     except:
                                         pass
-                                playing = False
-                                break
-                            if event.key == pygame.K_r:
-                                self.game.reset()
+
+                                if self.play == 'single':
+                                    print(self.game.paused)
+                                    if not self.game.paused:
+                                        self.game.pause()
+                                        result = paused_screen()
+
+                                        if result == "resume":
+                                            self.game.resume()
+                                        elif result == "save":
+                                            print("Saving game...")  # or call self.game.save()
+                                            self.game.resume()
+                                        elif result == "home":
+                                            print("Returning to main menu...")
+                                            playing = False  # Or however you switch to main menu
+                                        elif result == "reset":
+                                            print("Resetting game...")
+                                            self.game.reset()
+                                        self.game.resume()
 
                     # update and draw player
                     self.display_surface.fill(GRAY)
