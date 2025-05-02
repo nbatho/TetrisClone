@@ -7,7 +7,7 @@ from preview import Preview
 from random import choice
 from network import Network
 import time
-
+from sound import *
 from menu import *
 
 
@@ -55,6 +55,12 @@ class Main:
         self.display_surface = pygame.display.set_mode((WINDOW_WIDTH*2,WINDOW_HEIGHT))
         self.clock = pygame.time.Clock()
         pygame.display.set_caption('TetrisClone')
+        # Sound
+        pygame.mixer.init()
+
+        self.sound = SoundManager()
+        pygame.mixer.music.set_volume(MASTER_VOLUME)
+        self.sound.music_theme()
         #networking
         self.network = None
         self.player_id = None

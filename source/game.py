@@ -1,6 +1,7 @@
 from setting import *
 from random import choice
 from timer import Timer
+from sound import SoundManager
 class Game:
     def __init__(self, get_next_shape, update_score, bot_enable = False,x_offset = 0, is_remoted = False):
         #general
@@ -13,6 +14,9 @@ class Game:
         self.update_score = update_score
         self.is_remoted = is_remoted
         self.game_over = False
+        #music
+        pygame.mixer.init()
+        self.sound = SoundManager()
         #paused
         self.paused = False
         #bot
@@ -99,7 +103,7 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
 
     def create_new_tetromino(self):
-
+        self.sound.music_landing.play()
         self.check_finished_rows()
         self.tetrominos = Tetromino(
             self.get_next_shape(),
@@ -303,6 +307,8 @@ class Game:
 
                 # delete full row
                 for block in self.field_data[delete_row]:
+                    self.sound.line_clear.set_volume(EFFECT_VOLUME)
+                    self.sound.line_clear.play()
                     block.kill()
                 # move down blocks
                 for row in self.field_data:
@@ -367,6 +373,11 @@ class Tetromino():
         self.color = TETROMINOS[shape]['color']
         self.create_new_tetromino = create_new_tetromino
         self.field_data = field_data
+        # sound
+        pygame.mixer.init()
+        self.sound = SoundManager()
+        self.music_landing = self.sound.music_landing
+        self.music_landing.set_volume(EFFECT_VOLUME)
         # create blocks
         self.blocks = [Block(group,pos,self.color) for pos in self.block_positions]
 
