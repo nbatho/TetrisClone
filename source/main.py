@@ -30,6 +30,8 @@ def input_ip_screen():
                 if event.key == pygame.K_RETURN:
                     active = False
                     return input_text.strip() if input_text.strip() else "127.0.0.1"
+                elif event.key == pygame.K_ESCAPE:
+                    return None
                 elif event.key == pygame.K_BACKSPACE:
                     input_text = input_text[:-1]
                 else:
@@ -151,39 +153,47 @@ class Main:
                     self.opponent_preview = Preview(x_offset=WINDOW_WIDTH)
                 elif self.play == "vsPlayer":
                     host_ip = input_ip_screen()
-                    self.network = Network(host_ip)
-                    self.opponent_game = Game(self.get_opponent_next_shape, self.update_opponent_score,
-                                              bot_enable=False, x_offset=WINDOW_WIDTH, is_remoted=True)
-                    self.opponent_score = Score(x_offset=WINDOW_WIDTH)
-                    self.opponent_preview = Preview(x_offset=WINDOW_WIDTH)
-                    try:
-                        self.player_id = self.network.send("get")
-                        print(f"Connected as Player {self.player_id}")
-                    except:
-                        print("Could not connect to server.")
-                        # self.play = "single"
-                    # Chờ đến khi cả 2 người chơi sẵn sàng
-                    waiting = True
-                    font = pygame.font.SysFont("Arial", 36)
+                    if host_ip is None:
+                        self.play = None
+                        playing = False
+                        continue 
+                    else:
+                        self.network = Network(host_ip)
+                        self.opponent_game = Game(self.get_opponent_next_shape, self.update_opponent_score,
+                                                bot_enable=False, x_offset=WINDOW_WIDTH, is_remoted=True)
+                        self.opponent_score = Score(x_offset=WINDOW_WIDTH)
+                        self.opponent_preview = Preview(x_offset=WINDOW_WIDTH)
+                        try:
+                            self.player_id = self.network.send("get")
+                            print(f"Connected as Player {self.player_id}")
+                        except:
+                            print("Could not connect to server.")
+                            # self.play = "single"
+                        # Chờ đến khi cả 2 người chơi sẵn sàng
+                        waiting = True
+                        font = pygame.font.SysFont("Arial", 36)
+                        while waiting:
+                            my_state = self.game.get_state()
+                            my_state["ready"] = True  # Đánh dấu đã sẵn sàng
+                            opponent_state = self.network.send(my_state)
 
-                    while waiting:
-                        my_state = self.game.get_state()
-                        my_state["ready"] = True  # Đánh dấu đã sẵn sàng
-                        opponent_state = self.network.send(my_state)
+                            self.display_surface.fill("black")
+                            text = font.render("Waiting for other player...", True, "white")
+                            self.display_surface.blit(text, (WINDOW_WIDTH // 2 + 150, WINDOW_HEIGHT // 2 - 20))
+                            pygame.display.update()
 
-                        self.display_surface.fill("black")
-                        text = font.render("Waiting for other player...", True, "white")
-                        self.display_surface.blit(text, (WINDOW_WIDTH // 2 + 150, WINDOW_HEIGHT // 2 - 20))
-                        pygame.display.update()
+                            if opponent_state and opponent_state.get("both_ready"):
+                                waiting = False
 
-                        if opponent_state and opponent_state.get("both_ready"):
-                            waiting = False
-
-                        for event in pygame.event.get():
-                            if event.type == pygame.QUIT:
-                                pygame.quit()
-                                sys.exit()
-
+                            for event in pygame.event.get():
+                                if event.type == pygame.QUIT:
+                                    pygame.quit()
+                                    sys.exit()
+                                if event.type == pygame.KEYDOWN:
+                                    if event.key == pygame.K_ESCAPE:
+                                        waiting = False
+                                        playing = False
+                                       
                         time.sleep(0.5)
                 while playing:
                     for event in pygame.event.get():
@@ -198,8 +208,9 @@ class Main:
                                         self.network.client.close()
                                     except:
                                         pass
+                                    playing = False
 
-                                if self.play == 'single':
+                                if self.play in ['single','vsBot']:
                                     print(self.game.paused)
                                     if not self.game.paused:
                                         self.game.pause()
