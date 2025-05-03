@@ -103,7 +103,8 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
 
     def create_new_tetromino(self):
-        self.sound.music_landing.play()
+        if not self.bot_enable:
+            self.sound.music_landing.play()
         self.check_finished_rows()
         self.tetrominos = Tetromino(
             self.get_next_shape(),
@@ -297,8 +298,9 @@ class Game:
 
                 # delete full row
                 for block in self.field_data[delete_row]:
-                    self.sound.line_clear.set_volume(EFFECT_VOLUME)
-                    self.sound.line_clear.play()
+                    if not self.bot_enable:
+                        self.sound.line_clear.set_volume(EFFECT_VOLUME)
+                        self.sound.line_clear.play()
                     block.kill()
                 # move down blocks
                 for row in self.field_data:
