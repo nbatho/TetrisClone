@@ -198,16 +198,6 @@ class Game:
                 if score > best_score:
                     best_score = score
                     best_state = (positions, rotation)  # Lưu cả vị trí và số lần xoay
-
-                # Debug
-                # for i in range(ROWS):
-                #     for j in range(COLUMNS):
-                #         print(field_data_clone[i][j], end='')
-                #     print()
-                # print()
-
-            # print(f'Best Score: {best_score}')
-
             if best_state:
                 # Di chuyển khối đến vị trí có điểm số cao nhất
                 self.move_to_best_position(best_state)
