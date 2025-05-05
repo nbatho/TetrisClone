@@ -1,11 +1,7 @@
-import pygame
 from setting import *
 from random import choice
 from timer import Timer
 from sound import SoundManager
-
-pygame.mixer.init()
-music_landing = pygame.mixer.Sound("E:/Code/Python/Project/TetrisClone/sounds/landing.wav")
 class Game:
     def __init__(self, get_next_shape, update_score, bot_enable = False,x_offset = 0, is_remoted = False):
         #general
@@ -18,7 +14,11 @@ class Game:
         self.update_score = update_score
         self.is_remoted = is_remoted
         self.game_over = False
-        self.music_landing = music_landing
+        #music
+        pygame.mixer.init()
+        self.sound = SoundManager()
+        #paused
+        self.paused = False
         #bot
         self.bot_enable = bot_enable
         # lines
@@ -48,7 +48,8 @@ class Game:
             'print':Timer(1000),
             'calculate score': Timer(750),
         }
-        self.timers['vertical move'].activate()
+        if not self.paused:
+            self.timers['vertical move'].activate()
 
         # score
         self.current_level = 1
@@ -56,7 +57,6 @@ class Game:
         self.current_lines = 0
         # player
         self.ready = False
-
     def get_state(self):
         # Lưu lưới game dạng đơn giản
         field_serialized = [[1 if cell else 0 for cell in row] for row in self.field_data]
@@ -103,7 +103,8 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
 
     def create_new_tetromino(self):
-
+        if not self.bot_enable:
+            self.sound.music_landing.play()
         self.check_finished_rows()
         self.tetrominos = Tetromino(
             self.get_next_shape(),
@@ -131,16 +132,16 @@ class Game:
                     holes += 1
         return holes
     def evaluate_board(self,matrix):
-        height = 0
         bumpiness = 0
         hole = self.calculate_holes(matrix)
         complete_line = self.check_finished_rows()
-        ls_height = [0]*COLUMNS
         # Heurisitic weights
         a = -0.510066  # Aggregate Height Weight
         b = 0.760666  # Complete Lines Weight
         c = -0.35663  # Holes Weight
         d = -0.184483  # Bumpiness Weight
+        height = 0
+        ls_height = [0]*COLUMNS
         for j in range(COLUMNS):
             for i in range(ROWS):
                 if matrix[i][j] != 0:
@@ -155,7 +156,7 @@ class Game:
         return score
 
     def all_possible_move(self):
-        if self.game_over: return
+        if self.game_over or self.paused: return
         if not self.timers['calculate score'].active:
             best_score = float('-inf')
             best_state = None
@@ -198,16 +199,6 @@ class Game:
                 if score > best_score:
                     best_score = score
                     best_state = (positions, rotation)  # Lưu cả vị trí và số lần xoay
-
-                # Debug
-                # for i in range(ROWS):
-                #     for j in range(COLUMNS):
-                #         print(field_data_clone[i][j], end='')
-                #     print()
-                # print()
-
-            # print(f'Best Score: {best_score}')
-
             if best_state:
                 # Di chuyển khối đến vị trí có điểm số cao nhất
                 self.move_to_best_position(best_state)
@@ -236,13 +227,22 @@ class Game:
 
         # Thả khối xuống vị trí tốt nhất
         self.tetrominos.hard_drop()
-        self.music_landing.play()
+
+    def pause(self):
+        self.paused = True
+        for timer in self.timers.values():
+            timer.deactivate()
+
+    def resume(self):
+        self.paused = False
+        self.timers['vertical move'].activate()
     def timer_update(self):
-        if self.game_over: return
+        if self.game_over and self.paused: return
         for timer in self.timers.values():
             timer.update()
+
     def move_down(self):
-        if self.game_over: return
+        if self.game_over or self.paused: return
         self.tetrominos.move_down()
     def draw_grid(self):
         for col in range(1,COLUMNS):
@@ -258,8 +258,8 @@ class Game:
             return
         keys = pygame.key.get_pressed()
 
-        if self.game_over: return
-        if not self.bot_enable:
+        if self.game_over and self.paused: return
+        if not self.bot_enable and not self.paused:
             if not self.timers['horizontal move'].active:
                 if keys[pygame.K_LEFT]:
                     self.tetrominos.move_horizontal(-1)
@@ -288,7 +288,6 @@ class Game:
                 self.down_pressed = False
                 self.timers['vertical move'].duration = self.down_speed
     def check_finished_rows(self):
-
         # get the full row indexes
         delete_rows = []
         for i,row in enumerate(self.field_data):
@@ -299,6 +298,9 @@ class Game:
 
                 # delete full row
                 for block in self.field_data[delete_row]:
+                    if not self.bot_enable:
+                        self.sound.line_clear.set_volume(EFFECT_VOLUME)
+                        self.sound.line_clear.play()
                     block.kill()
                 # move down blocks
                 for row in self.field_data:
@@ -339,16 +341,14 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
     def run(self):
         #update
-        # if not self.timers['print'].active:
-        #     print(self.get_state())
-        #     self.timers['print'].activate()
-        if not self.game_over:
-            self.input()
-            self.timer_update()
-            self.sprites.update()
+        if self.game_over:
+            return
+        self.input()
+        self.timer_update()
+        self.sprites.update()
 
-            if self.bot_enable and not self.game_over:
-                self.all_possible_move()
+        if self.bot_enable:
+            self.all_possible_move()
         # drawing
         self.surface.fill(GRAY)
         self.sprites.draw(self.surface)
@@ -365,10 +365,11 @@ class Tetromino():
         self.color = TETROMINOS[shape]['color']
         self.create_new_tetromino = create_new_tetromino
         self.field_data = field_data
-
-        #sound
-        self.music_landing = music_landing
-        
+        # sound
+        pygame.mixer.init()
+        self.sound = SoundManager()
+        self.music_landing = self.sound.music_landing
+        self.music_landing.set_volume(EFFECT_VOLUME)
         # create blocks
         self.blocks = [Block(group,pos,self.color) for pos in self.block_positions]
 
@@ -426,7 +427,6 @@ class Tetromino():
         else:
             for block in self.blocks:
                 self.field_data[int(block.pos.y)][int(block.pos.x)] = block
-            self.music_landing.play()
             self.create_new_tetromino()
     def hard_drop(self):
         while not self.next_move_vertical_collide(self.blocks, 1):
@@ -435,9 +435,6 @@ class Tetromino():
 
         for block in self.blocks:
             self.field_data[int(block.pos.y)][int(block.pos.x)] = block
-            self.music_landing.play()
-            pygame.mixer.music.set_volume(LANDING_VOLUME)
-
         if self.create_new_tetromino:
             self.create_new_tetromino()
     def move_horizontal(self,amount):
