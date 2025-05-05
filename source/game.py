@@ -206,7 +206,6 @@ class Game:
             self.timers['calculate score'].activate()
 
     def move_to_best_position(self, best_state):
-        """Di chuyển khối đến vị trí tối ưu đã chọn"""
         best_position, best_rotation = best_state  # Giải nén thông tin
         current_position = [(block.pos.x, block.pos.y) for block in self.tetrominos.blocks]
         target_position = [(block.x, block.y) for block in best_position]

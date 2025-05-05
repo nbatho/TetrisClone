@@ -211,7 +211,6 @@ class Main:
                                     playing = False
 
                                 if self.play in ['single','vsBot']:
-                                    print(self.game.paused)
                                     if not self.game.paused:
                                         self.game.pause()
                                         result = paused_screen()
@@ -220,7 +219,8 @@ class Main:
                                             self.game.resume()
                                         elif result == "save":
                                             print("Saving game...")  # or call self.game.save()
-                                            self.game.resume()
+                                            self.game.pause()
+                                            playing = False
                                         elif result == "home":
                                             print("Returning to main menu...")
                                             playing = False  # Or however you switch to main menu
