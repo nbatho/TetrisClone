@@ -248,7 +248,6 @@ class Main:
                                     playing = False
 
                                 if self.play in ['single','vsBot']:
-                                    print(self.game.paused)
                                     if not self.game.paused:
                                         self.game.pause()
                                         result = paused_screen()
@@ -257,8 +256,7 @@ class Main:
                                             self.game.resume()
                                         elif result == "save":
                                             save_score(self.player_name, self.score.score)
-                                            print("Saving game...")  # or call self.game.save()
-                                            draw_leaderboard(self.display_surface, pygame.font.SysFont("Arial", 24))
+                                            print("Saving game...") 
                                             self.game.pause()
                                             playing = False
                                         elif result == "home":
@@ -271,10 +269,7 @@ class Main:
 
                     # update and draw player
                     self.display_surface.fill(GRAY)
-                    # if self.play == "single" and self.game.game_over:
-                    # save_score(self.player_name, self.score.score)
                     draw_leaderboard(self.display_surface, pygame.font.SysFont("Arial", 24))
-                    #     playing = False
                     self.game.run()
                     self.score.run()
                     self.preview.run(self.next_shapes)
