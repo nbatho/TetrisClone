@@ -1,6 +1,7 @@
 import pygame, sys
 from button import Button
 import os
+from leaderboard import *
 
 from setting import *
 
@@ -67,32 +68,22 @@ def play():
     pass
 
 def options():
-    while True:
-        OPTIONS_MOUSE_POS = pygame.mouse.get_pos()
-
-        SCREEN.fill("white")
-
-        # OPTIONS_BACK = Button(
-        #     image=None, pos=(100, 50), 
-        #     text_input="BACK", font=get_font(30), 
-        #     base_color="Black", hovering_color="Green"
-        # )
-
-        # OPTIONS_BACK.changeColor(OPTIONS_MOUSE_POS)
-        # OPTIONS_BACK.update(SCREEN)
+    screen = pygame.display.get_surface()
+    showing_options = True
+    while showing_options:
+        screen.fill((0, 0, 0))  # xóa nền trước
+        font = get_font(24)
+        leaderboard_surface = render_leaderboard_surface(font)
+        screen.blit(leaderboard_surface, (screen.get_width()//2 - 250, 100))
+        pygame.display.update()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            # elif event.type == pygame.MOUSEBUTTONDOWN:
-            #     if OPTIONS_BACK.checkForInput(OPTIONS_MOUSE_POS):
-            #         return
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return
-                
-        pygame.display.update()
+                if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
+                    showing_options = False
 
 
 def paused_screen():
@@ -156,8 +147,8 @@ def main_menu():
             base_color="#d7fcd4", hovering_color="White"
             )
         OPTIONS_BUTTON = Button(
-            image=pygame.image.load("../graphics/BattleAI Rect.png"), 
-            pos=(640, 400), text_input="OPTIONS", font=get_font(50), 
+            image=pygame.image.load("../graphics/Play Rect.png"), 
+            pos=(640, 400), text_input="SCORE", font=get_font(50), 
             base_color="#d7fcd4", hovering_color="White"
             )
         QUIT_BUTTON = Button(

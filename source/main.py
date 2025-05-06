@@ -1,6 +1,5 @@
 from setting import *
-
-# components
+from leaderboard import save_score, draw_leaderboard
 from game import Game
 from score import Score
 from preview import Preview
@@ -50,6 +49,42 @@ def input_ip_screen():
 
         pygame.display.flip()
 
+def get_player_name(screen, clock, font):
+    input_box = pygame.Rect(440, 300, 400, 60)
+    color = pygame.Color('dodgerblue2')
+    text = ''
+    done = False
+
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    if text.strip() != '':
+                        return text.strip()
+                elif event.key == pygame.K_BACKSPACE:
+                    text = text[:-1]
+                else:
+                    if len(text) < 15:
+                        text += event.unicode
+
+        # Giao diện nền đen
+        screen.fill((0, 0, 0))  # màu đen
+
+        # Tiêu đề
+        title_surface = font.render("Enter your name:", True, pygame.Color('white'))
+        screen.blit(title_surface, title_surface.get_rect(center=(640, 200)))
+
+        # Khung nhập tên
+        pygame.draw.rect(screen, color, input_box, 2)
+        txt_surface = font.render(text, True, pygame.Color("white"))
+        screen.blit(txt_surface, (input_box.x + 10, input_box.y + 15))
+
+        pygame.display.flip()
+        clock.tick(30)
+
 class Main:
     def __init__(self):
         # general
@@ -59,10 +94,11 @@ class Main:
         pygame.display.set_caption('TetrisClone')
         # Sound
         pygame.mixer.init()
-
         self.sound = SoundManager()
         pygame.mixer.music.set_volume(MASTER_VOLUME)
         self.sound.music_theme()
+        #Player
+        self.player_name = "Player"
         #networking
         self.network = None
         self.player_id = None
@@ -140,12 +176,13 @@ class Main:
             if selection in ["single", "vsBot", "vsPlayer"]:
                 self.play = selection
                 self.BOT = (selection == "vsBot")
-                if self.play == 'single': offset = WINDOW_WIDTH//2 + 50
+                if self.play == 'single': 
+                    offset = WINDOW_WIDTH//2 + 50
+                    self.player_name = get_player_name(self.display_surface, self.clock, pygame.font.SysFont("Arial", 36))
                 else: offset = 0
                 self.game = Game(self.get_next_shape, self.update_score, bot_enable=False, x_offset=offset)
                 self.score = Score(x_offset=offset)
                 self.preview = Preview(x_offset=offset)
-
                 if self.play == "vsBot":
                     self.opponent_game = Game(self.get_opponent_next_shape, self.update_opponent_score,
                                               bot_enable=True, x_offset=WINDOW_WIDTH)
@@ -211,6 +248,7 @@ class Main:
                                     playing = False
 
                                 if self.play in ['single','vsBot']:
+                                    print(self.game.paused)
                                     if not self.game.paused:
                                         self.game.pause()
                                         result = paused_screen()
@@ -218,7 +256,9 @@ class Main:
                                         if result == "resume":
                                             self.game.resume()
                                         elif result == "save":
+                                            save_score(self.player_name, self.score.score)
                                             print("Saving game...")  # or call self.game.save()
+                                            draw_leaderboard(self.display_surface, pygame.font.SysFont("Arial", 24))
                                             self.game.pause()
                                             playing = False
                                         elif result == "home":
@@ -231,6 +271,10 @@ class Main:
 
                     # update and draw player
                     self.display_surface.fill(GRAY)
+                    # if self.play == "single" and self.game.game_over:
+                    # save_score(self.player_name, self.score.score)
+                    draw_leaderboard(self.display_surface, pygame.font.SysFont("Arial", 24))
+                    #     playing = False
                     self.game.run()
                     self.score.run()
                     self.preview.run(self.next_shapes)
@@ -259,6 +303,24 @@ class Main:
 
                     pygame.display.update()
                     self.clock.tick(60)
+                if self.play == "single" and self.game.game_over:
+                    save_score(self.player_name, self.score.score)
+                    # Hiển thị leaderboard
+                    self.display_surface.fill("black")
+                    draw_leaderboard(self.display_surface, pygame.font.SysFont("Arial", 24))
+                    playing = False
+                    pygame.display.update()
+                    # pygame.time.wait(5000)  # Hiển thị 5 giây
+                    waiting = True
+                    while waiting:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                pygame.quit()
+                                sys.exit()
+                            elif event.type == pygame.KEYDOWN:
+                                if event.key in [pygame.K_RETURN, pygame.K_ESCAPE]:
+                                    waiting = False
+
             elif selection == "options":
                 options()
             elif selection == "quit":
@@ -267,5 +329,5 @@ class Main:
                 sys.exit()
 
 if __name__ == '__main__':
-    main = Main()
+    main = Main()   
     main.run()
