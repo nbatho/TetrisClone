@@ -1,11 +1,7 @@
 import pygame, sys
 from button import Button
-import os
 from leaderboard import *
-
 from setting import *
-
-# pygame.init()
 
 SCREEN = pygame.display.set_mode((WINDOW_WIDTH*2, WINDOW_HEIGHT))
 pygame.display.set_caption("Menu")
@@ -63,10 +59,6 @@ def play_mode_menu():
 
 def get_font(size): # Returns Press-Start-2P in the desired size
     return pygame.font.Font("../graphics/font.ttf", size)
-
-def play():
-    pass
-
 def options():
     screen = pygame.display.get_surface()
     showing_options = True

@@ -20,7 +20,7 @@ def save_score(name, score):
 
 def draw_leaderboard(surface, font):
     leaderboard = load_leaderboard()
-    title = font.render("TOP 5", True, "white")
+    title = font.render("TOP 10", True, "white")
     surface.blit(title, (30, 30))
     for i, entry in enumerate(leaderboard):
         text = f"{i+1}. {entry['name'][:10]}: {entry['score']}"
@@ -32,7 +32,7 @@ def draw_leaderboard(surface, font):
 def render_leaderboard_surface(font):
     surface = pygame.Surface((600, 600), pygame.SRCALPHA)
     leaderboard = load_leaderboard()
-    title = font.render("TOP 5", True, "white")
+    title = font.render("TOP 10", True, "white")
     surface.blit(title, (20, 20))
     
     for i, entry in enumerate(leaderboard):
