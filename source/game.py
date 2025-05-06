@@ -341,8 +341,6 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
     def run(self):
         #update
-        if self.game_over:
-            return
         self.input()
         self.timer_update()
         self.sprites.update()

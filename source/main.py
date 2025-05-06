@@ -219,7 +219,7 @@ class Main:
                             self.display_surface.blit(text, (WINDOW_WIDTH // 2 + 150, WINDOW_HEIGHT // 2 - 20))
                             pygame.display.update()
 
-                            if opponent_state and opponent_state.get("both_ready"):
+                            if isinstance(opponent_state, dict)  and opponent_state.get("both_ready"):
                                 waiting = False
 
                             for event in pygame.event.get():
