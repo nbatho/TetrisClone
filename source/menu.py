@@ -147,8 +147,8 @@ def main_menu():
             base_color="#d7fcd4", hovering_color="White"
             )
         OPTIONS_BUTTON = Button(
-            image=pygame.image.load("C:/Users/Dell/Desktop/TetrisClone/TetrisClone/graphics/BattleAI Rect.png"), 
-            pos=(640, 400), text_input="OPTIONS", font=get_font(50), 
+            image=pygame.image.load("C:/Users/Dell/Desktop/TetrisClone/TetrisClone/graphics/Play Rect.png"), 
+            pos=(640, 400), text_input="SCORE", font=get_font(50), 
             base_color="#d7fcd4", hovering_color="White"
             )
         QUIT_BUTTON = Button(
