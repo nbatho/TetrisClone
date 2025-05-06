@@ -259,7 +259,8 @@ class Main:
                                             save_score(self.player_name, self.score.score)
                                             print("Saving game...")  # or call self.game.save()
                                             draw_leaderboard(self.display_surface, pygame.font.SysFont("Arial", 24))
-                                            self.game.resume()
+                                            self.game.pause()
+                                            playing = False
                                         elif result == "home":
                                             print("Returning to main menu...")
                                             playing = False  # Or however you switch to main menu
@@ -328,5 +329,5 @@ class Main:
                 sys.exit()
 
 if __name__ == '__main__':
-    main = Main()
+    main = Main()   
     main.run()
