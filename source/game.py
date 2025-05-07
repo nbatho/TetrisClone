@@ -103,7 +103,9 @@ class Game:
         self.update_score(self.current_lines, self.current_score, self.current_level)
 
     def create_new_tetromino(self):
+        if self.game_over: return
         if not self.bot_enable:
+            self.sound.music_landing.set_volume(EFFECT_VOLUME)
             self.sound.music_landing.play()
         self.check_finished_rows()
         self.tetrominos = Tetromino(

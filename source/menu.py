@@ -86,7 +86,7 @@ def paused_screen():
         paused_text = get_font(70).render("PAUSED", True, "white")
         save_text = get_font(30).render("SAVE", True, "white")
         main_text = get_font(30).render("HOME", True, "white")
-        reset_text = get_font(30).render("RESET", True, "white")
+        reset_text = get_font(30).render("NEW GAME", True, "white")
         paused_rect = paused_text.get_rect(center=(WINDOW_WIDTH , 300))
         main_rect = main_text.get_rect(center=(WINDOW_WIDTH -200, 400))
         save_rect = save_text.get_rect(center=(WINDOW_WIDTH, 400))

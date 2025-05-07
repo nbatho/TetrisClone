@@ -161,10 +161,11 @@ class Main:
                     pygame.draw.rect(self.display_surface, (150, 150, 150), rect)  # màu block
                     # pygame.draw.rect(self.display_surface, (50, 50, 50), rect, 1)  # viền ô
 
-    def show_result(self, result_text):
+    def show_result(self, result_text,offset = 0):
         font = pygame.font.SysFont("Arial", 48)
         text_surface = font.render(result_text, True, "white")
-        self.display_surface.blit(text_surface, (WINDOW_WIDTH // 2 - 150, WINDOW_HEIGHT // 2))
+        pygame.draw.rect(SCREEN, (128,128,128,0), (PADDING + offset, 250, 300, 150))
+        self.display_surface.blit(text_surface, (PADDING + offset + 75, WINDOW_HEIGHT // 2-25))
         pygame.display.update()
         pygame.time.delay(100)
     def run(self):
@@ -277,6 +278,15 @@ class Main:
                         self.opponent_game.run()
                         self.opponent_score.run()
                         self.opponent_preview.run(self.opponent_next_shapes)
+                        if self.game.game_over and self.opponent_game.game_over:
+                            player = self.score.score
+                            player_bot = self.opponent_score.score
+                            if player > player_bot:
+                                self.show_result("You Win!")
+                            elif player < player_bot:
+                                self.show_result("You Lose!")
+                            else:
+                                self.show_result("Draw!")
                     elif self.play == "vsPlayer":
                         my_state = self.game.get_state()
                         my_state["ready"] = True
@@ -298,23 +308,21 @@ class Main:
 
                     pygame.display.update()
                     self.clock.tick(60)
-                if self.play == "single" and self.game.game_over:
-                    save_score(self.player_name, self.score.score)
-                    # Hiển thị leaderboard
-                    self.display_surface.fill("black")
-                    draw_leaderboard(self.display_surface, pygame.font.SysFont("Arial", 24))
-                    playing = False
-                    pygame.display.update()
-                    # pygame.time.wait(5000)  # Hiển thị 5 giây
-                    waiting = True
-                    while waiting:
-                        for event in pygame.event.get():
-                            if event.type == pygame.QUIT:
-                                pygame.quit()
-                                sys.exit()
-                            elif event.type == pygame.KEYDOWN:
-                                if event.key in [pygame.K_RETURN, pygame.K_ESCAPE]:
-                                    waiting = False
+                    if self.play == "single" and self.game.game_over:
+                        save_score(self.player_name, self.score.score)
+                        playing = False
+                        self.show_result("You Lose",345)
+                        pygame.display.update()
+                        # pygame.time.wait(5000)  # Hiển thị 5 giây
+                        waiting = True
+                        while waiting:
+                            for event in pygame.event.get():
+                                if event.type == pygame.QUIT:
+                                    pygame.quit()
+                                    sys.exit()
+                                elif event.type == pygame.KEYDOWN:
+                                    if event.key in [pygame.K_RETURN, pygame.K_ESCAPE]:
+                                        waiting = False
 
             elif selection == "options":
                 options()
