@@ -301,7 +301,7 @@ class Game:
                 # delete full row
                 for block in self.field_data[delete_row]:
                     if not self.bot_enable:
-                        self.sound.line_clear.set_volume(EFFECT_VOLUME)
+                        self.sound.line_clear.set_volume(0.1)
                         self.sound.line_clear.play()
                     block.kill()
                 # move down blocks
