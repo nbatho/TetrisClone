@@ -9,10 +9,6 @@ import time
 from sound import *
 from menu import *
 
-
-
-
-
 class Main:
     def __init__(self):
         # general
@@ -121,7 +117,7 @@ class Main:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         active = False
-                        return input_text.strip() if input_text.strip() else "127.0.0.1"
+                        return input_text.strip() if input_text.strip() else "0.0.0.0"
                     elif event.key == pygame.K_ESCAPE:
                         return None
                     elif event.key == pygame.K_BACKSPACE:
