@@ -59,7 +59,10 @@ class Game:
         self.ready = False
     def get_state(self):
         # Lưu lưới game dạng đơn giản
-        field_serialized = [[1 if cell else 0 for cell in row] for row in self.field_data]
+        field_serialized = [
+            [cell.color if cell else None for cell in row]
+            for row in self.field_data
+        ]
 
         return {
             "field_data": field_serialized,
@@ -79,7 +82,7 @@ class Game:
         for y, row in enumerate(state["field_data"]):
             for x, cell in enumerate(row):
                 if cell:
-                    block = Block(self.sprites, pygame.Vector2(x, y) - BLOCK_OFFSET, (150, 150, 150))  # xám cho đối thủ
+                    block = Block(self.sprites, pygame.Vector2(x, y) - BLOCK_OFFSET, cell)
                     self.field_data[y][x] = block
 
         self.current_score = state["score"]
@@ -447,6 +450,7 @@ class Block(pygame.sprite.Sprite):
         super().__init__(group)
         self.image = pygame.Surface((CELL_SIZE,CELL_SIZE))
         self.image.fill(color)
+        self.color = color
         # position
         self.pos = pygame.Vector2(pos) + BLOCK_OFFSET
         self.rect = self.image.get_rect(topleft = self.pos * CELL_SIZE)
