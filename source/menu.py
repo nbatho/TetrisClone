@@ -5,7 +5,7 @@ from setting import *
 
 SCREEN = pygame.display.set_mode((WINDOW_WIDTH*2, WINDOW_HEIGHT))
 pygame.display.set_caption("Menu")
-BG = pygame.transform.scale(pygame.image.load("../graphics/Background.jpg"), (WINDOW_WIDTH*2, WINDOW_HEIGHT))
+BG = pygame.transform.scale(pygame.image.load("C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/Background.jpg"), (WINDOW_WIDTH*2, WINDOW_HEIGHT))
 def play_mode_menu():
     while True:
         SCREEN.blit(BG, (0, 0))
@@ -17,22 +17,22 @@ def play_mode_menu():
         SCREEN.blit(TITLE_TEXT, TITLE_RECT)
 
         SINGLE_BUTTON = Button(
-            image=pygame.image.load("../graphics/Play Rect.png"),
+            image=pygame.image.load("C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/Play Rect.png"),
             pos=(640, 220), text_input="SINGLE", font=get_font(40),
             base_color="#d7fcd4", hovering_color="White"
         )
         BOT_BUTTON = Button(
-            image=pygame.image.load("../graphics/BattleAI Rect.png"),
+            image=pygame.image.load("C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/BattleAI Rect.png"),
             pos=(640, 340), text_input="vsBOT", font=get_font(40),
             base_color="#d7fcd4", hovering_color="White"
         )
         PLAYER_BUTTON = Button(
-            image=pygame.image.load("../graphics/BattleAI Rect.png"),
+            image=pygame.image.load("C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/BattleAI Rect.png"),
             pos=(640, 460), text_input="vsPLAYER", font=get_font(40),
             base_color="#d7fcd4", hovering_color="White"
         )
         BACK_BUTTON = Button(
-            image=pygame.image.load("../graphics/Quit Rect.png"),
+            image=pygame.image.load("C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/Quit Rect.png"),
             pos=(640, 580), text_input="BACK", font=get_font(40),
             base_color="#d7fcd4", hovering_color="White"
         )
@@ -58,7 +58,7 @@ def play_mode_menu():
         pygame.display.update()
 
 def get_font(size): # Returns Press-Start-2P in the desired size
-    return pygame.font.Font("../graphics/font.ttf", size)
+    return pygame.font.Font("C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/font.ttf", size)
 def options():
     screen = pygame.display.get_surface()
     showing_options = True
@@ -134,17 +134,17 @@ def main_menu():
         MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
 
         PLAY_BUTTON = Button(
-            image=pygame.image.load("../graphics/Play Rect.png"), 
+            image=pygame.image.load("C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/Play Rect.png"), 
             pos=(640, 250), text_input="PLAY", font=get_font(50), 
             base_color="#d7fcd4", hovering_color="White"
             )
         OPTIONS_BUTTON = Button(
-            image=pygame.image.load("../graphics/Play Rect.png"), 
+            image=pygame.image.load("C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/Play Rect.png"), 
             pos=(640, 400), text_input="SCORE", font=get_font(50), 
             base_color="#d7fcd4", hovering_color="White"
             )
         QUIT_BUTTON = Button(
-            image=pygame.image.load("../graphics/Quit Rect.png"),
+            image=pygame.image.load("C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/Quit Rect.png"),
             pos=(640, 550), text_input="QUIT", font=get_font(50),
             base_color="#d7fcd4", hovering_color="White"
             )

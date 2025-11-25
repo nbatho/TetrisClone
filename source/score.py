@@ -12,7 +12,7 @@ class Score:
         self.lines = 0
 
         # font
-        self.font = pygame.font.Font('../graphics/Russo_One.ttf',30)
+        self.font = pygame.font.Font('C:/Users/thong/OneDrive/Desktop/TetrisClone/graphics/Russo_One.ttf',30)
         # increment
         self.increment_height = self.surface.get_height() / 3
 
